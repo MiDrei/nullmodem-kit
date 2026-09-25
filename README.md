@@ -32,3 +32,23 @@ verlustbehaftet wäre.
 ## Stand
 
 Alle Pakete sind stdlib-only. `go test ./...`
+
+## Releases
+
+BBS und Reader binden das Kit über eine feste Version in ihrer `go.mod` ein.
+Ihre Builds (Docker-Image, Reader-Releases) laufen mit `GOWORK=off` und
+nehmen genau diese Version. Eine Kit-Änderung kommt dort also erst an,
+wenn sie getaggt ist und beide darauf umgestellt sind:
+
+```
+scripts/release.sh v0.2.0
+```
+
+Das Skript prüft, dass `main` sauber und mit `origin` gleichauf ist, lässt
+`go vet` und die Tests laufen, setzt und pusht den Tag und hebt dann die
+danebenliegenden Checkouts `../bbs` und `../reader` per `go get` auf die neue
+Version — jeweils mit Build und Tests. Committen und pushen musst du dort
+selbst, nachdem du den Diff angesehen hast.
+
+Zum lokalen Entwickeln über alle drei Repos hinweg dient das `go.work` im
+Elternverzeichnis; es gilt nur auf deiner Maschine, nie in einem Release.
