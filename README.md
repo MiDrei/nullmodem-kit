@@ -52,3 +52,9 @@ selbst, nachdem du den Diff angesehen hast.
 
 Zum lokalen Entwickeln über alle drei Repos hinweg dient das `go.work` im
 Elternverzeichnis; es gilt nur auf deiner Maschine, nie in einem Release.
+
+## Lizenz
+
+MIT — siehe [LICENSE](LICENSE). Das Kit soll auch anderen BBS- und
+Reader-Projekten dienen: QWK/QWKE, CP437 und ANSI sind Handwerk, das keiner
+zweimal schreiben muss.
