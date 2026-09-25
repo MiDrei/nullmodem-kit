@@ -204,3 +204,38 @@ func TestReadToReaderEXTSkipsMalformedLinesInsteadOfFailing(t *testing.T) {
 		t.Fatalf("Alias = %q -- parsing must continue past a malformed line", got.Alias)
 	}
 }
+
+func TestAreaLinesRoundTripThroughAPacket(t *testing.T) {
+	path := t.TempDir() + "/T.QWK"
+	control := ControlInfo{BBSName: "Test", BBSID: "TEST", Username: "alice",
+		Conferences: []ConferenceInfo{{Number: 0, Name: "Personal"}, {Number: 3, Name: "General"}},
+		Areas:       []AreaEntry{{Number: 0, Flags: "N"}}}
+	msgs := []PackedMessage{{Header: MessageHeader{Number: 7, Conference: 3, To: "All", From: "Bob", Subject: "hi"}, Text: "x"}}
+	if err := BuildQWKPacket(path, control, msgs); err != nil {
+		t.Fatalf("BuildQWKPacket: %v", err)
+	}
+	p, err := OpenPacket(path)
+	if err != nil {
+		t.Fatalf("OpenPacket: %v", err)
+	}
+	defer p.Close()
+	if a, ok := p.Ext.Area(0); !ok || !a.IsNetmail() {
+		t.Fatalf("conference 0 = %+v, %v; want flagged netmail", a, ok)
+	}
+	if a, ok := p.Ext.Area(3); ok && a.IsNetmail() {
+		t.Fatal("conference 3 must not be netmail")
+	}
+	if p.Ext.Alias != "alice" {
+		t.Fatalf("alias = %q", p.Ext.Alias)
+	}
+}
+
+func TestWriteToReaderEXTWritesAreasWithoutAUsername(t *testing.T) {
+	var buf bytes.Buffer
+	if err := WriteToReaderEXT(&buf, "", AreaEntry{Number: 0, Flags: "N"}); err != nil {
+		t.Fatal(err)
+	}
+	if buf.String() != "AREA 0 N\r\n" {
+		t.Fatalf("contents = %q", buf.String())
+	}
+}

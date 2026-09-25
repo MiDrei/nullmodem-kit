@@ -46,12 +46,12 @@ func BuildQWKPacket(path string, control ControlInfo, messages []PackedMessage) 
 		return err
 	}
 
-	if control.Username != "" {
+	if control.Username != "" || len(control.Areas) > 0 {
 		tw, err := zw.Create("TOREADER.EXT")
 		if err != nil {
 			return fmt.Errorf("qwk: creating TOREADER.EXT entry: %w", err)
 		}
-		if err := WriteToReaderEXT(tw, control.Username); err != nil {
+		if err := WriteToReaderEXT(tw, control.Username, control.Areas...); err != nil {
 			return err
 		}
 	}

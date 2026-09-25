@@ -64,6 +64,10 @@ type ControlInfo struct {
 	// kept distinct from CallerName since that may be their real name
 	// instead.
 	Username string
+	// Areas are written into TOREADER.EXT as AREA lines (see
+	// WriteToReaderEXT) -- typically the netmail conference, flagged
+	// 'N'.
+	Areas []AreaEntry
 }
 
 // WriteControlDAT writes CONTROL.DAT: a CRLF text file with lines in

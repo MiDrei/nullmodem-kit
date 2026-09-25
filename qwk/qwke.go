@@ -11,18 +11,27 @@ import (
 // WriteToReaderEXT writes TOREADER.EXT, the file whose mere presence
 // in a .QWK packet is what a reader uses to recognize QWKE support
 // (the QWKE 1.02 spec, wmcbrine.com/mmail/specs/qwke.html, defines no
-// separate marker line for this in CONTROL.DAT). This package only
-// writes the ALIAS line -- the caller's real login handle -- since
-// that's the one piece of information callers of this package
-// actually have to offer; the format also defines AREA/BULL/ATTACH/
-// FILE/KEYWORD/FILTER/TWIT lines for other purposes this codebase has
-// no equivalent state for yet. ReadToReaderEXT understands all of
-// them, since a reader has to cope with whatever a foreign door sends.
-func WriteToReaderEXT(w io.Writer, username string) error {
-	if username == "" {
+// separate marker line for this in CONTROL.DAT). This package writes
+// the ALIAS line -- the caller's real login handle -- and one AREA line
+// per entry in areas, e.g. the netmail conference flagged 'N' so a
+// reader asks for a recipient there instead of addressing "All"; the
+// format also defines BULL/ATTACH/FILE/KEYWORD/FILTER/TWIT lines for
+// other purposes this codebase has no equivalent state for yet.
+// ReadToReaderEXT understands all of them, since a reader has to cope
+// with whatever a foreign door sends. Nothing is written when there is
+// neither a username nor an area.
+func WriteToReaderEXT(w io.Writer, username string, areas ...AreaEntry) error {
+	var b strings.Builder
+	if username != "" {
+		b.WriteString("ALIAS " + username + "\r\n")
+	}
+	for _, a := range areas {
+		fmt.Fprintf(&b, "AREA %d %s\r\n", a.Number, a.Flags)
+	}
+	if b.Len() == 0 {
 		return nil
 	}
-	if _, err := io.WriteString(w, "ALIAS "+username+"\r\n"); err != nil {
+	if _, err := io.WriteString(w, b.String()); err != nil {
 		return fmt.Errorf("qwk: writing TOREADER.EXT: %w", err)
 	}
 	return nil
