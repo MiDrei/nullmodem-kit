@@ -71,10 +71,15 @@ func TestParseReplyPacketRejectsNonZipFile(t *testing.T) {
 }
 
 func TestParseReplyPacketErrorsWhenBBSIDFileMissing(t *testing.T) {
+	// Two candidates and neither named for this BBS: no way to tell
+	// which one is meant. (A single .MSG is taken whatever its name --
+	// see TestParseReplyPacketTakesTheOnlyMSGWhateverItsName.)
 	var buf bytes.Buffer
 	zw := zip.NewWriter(&buf)
-	w, _ := zw.Create("WRONGID.MSG")
-	_ = WriteMessagesDAT(w, nil)
+	for _, name := range []string{"WRONGID.MSG", "OTHER.MSG"} {
+		w, _ := zw.Create(name)
+		_ = WriteMessagesDAT(w, nil)
+	}
 	zw.Close()
 
 	path := filepath.Join(t.TempDir(), "x.rep")
@@ -190,5 +195,19 @@ func TestBuildReplyPacketWritesBBSIDInRecordZero(t *testing.T) {
 func TestBuildReplyPacketRejectsBlankBBSID(t *testing.T) {
 	if err := BuildReplyPacket(filepath.Join(t.TempDir(), "X.REP"), "", nil); err == nil {
 		t.Fatal("BuildReplyPacket should refuse a blank BBS ID -- it names the packet's only entry")
+	}
+}
+
+func TestParseReplyPacketTakesTheOnlyMSGWhateverItsName(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "X.REP")
+	if err := BuildReplyPacket(path, "OTHERID", []Reply{{Conference: 3, To: "All", From: "alice", Subject: "hi", Text: "x"}}); err != nil {
+		t.Fatalf("BuildReplyPacket: %v", err)
+	}
+	msgs, err := ParseReplyPacket(path, "MAIKSPLA")
+	if err != nil {
+		t.Fatalf("ParseReplyPacket: %v", err)
+	}
+	if len(msgs) != 1 || msgs[0].Header.Subject != "hi" {
+		t.Fatalf("msgs = %+v", msgs)
 	}
 }

@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"path/filepath"
 	"strings"
 	"time"
 )
@@ -42,19 +43,39 @@ func ParseReplyPacket(path, bbsID string) ([]PackedMessage, error) {
 	}
 	defer zr.Close()
 
+	// The reply file is named after the BBS ID. A reader that got the
+	// ID wrong (configured by hand, or from an older packet) still sent
+	// a perfectly good reply, so a packet holding exactly one .MSG is
+	// taken whatever its name -- the same leniency classic QWK doors
+	// show. With several, the name has to match.
 	wantName := strings.ToUpper(bbsID) + ".MSG"
+	var match, only *zip.File
+	msgFiles := 0
 	for _, zf := range zr.File {
-		if !strings.EqualFold(zf.Name, wantName) {
-			continue
+		if strings.EqualFold(zf.Name, wantName) {
+			match = zf
 		}
-		rc, err := zf.Open()
-		if err != nil {
-			return nil, fmt.Errorf("qwk: opening %s in %s: %w", zf.Name, path, err)
+		if strings.EqualFold(filepath.Ext(zf.Name), ".MSG") {
+			msgFiles++
+			only = zf
 		}
-		defer rc.Close()
-		return ReadMessagesDAT(rc)
 	}
-	return nil, fmt.Errorf("qwk: %s not found in %s", wantName, path)
+	if match == nil && msgFiles == 1 {
+		match = only
+	}
+	if match == nil {
+		var names []string
+		for _, zf := range zr.File {
+			names = append(names, zf.Name)
+		}
+		return nil, fmt.Errorf("qwk: %s not found in %s (it holds: %s)", wantName, path, strings.Join(names, ", "))
+	}
+	rc, err := match.Open()
+	if err != nil {
+		return nil, fmt.Errorf("qwk: opening %s in %s: %w", match.Name, path, err)
+	}
+	defer rc.Close()
+	return ReadMessagesDAT(rc)
 }
 
 // Reply is one outgoing message bound for a .REP packet. It is a
