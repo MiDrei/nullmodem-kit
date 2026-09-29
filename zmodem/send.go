@@ -176,16 +176,24 @@ func runSexyz(cmd *exec.Cmd, conn io.ReadWriter, stderr *bytes.Buffer, name stri
 	leftoverCh := make(chan []byte, 1)
 	go func() { leftoverCh <- copyUntilClosed(stdin, conn) }()
 
-	waitErr := cmd.Wait()
-
-	// Both goroutines above must be done touching conn before this
+	// Everything sexyz wrote must reach conn before Wait: Wait closes
+	// the stdout pipe as soon as the process has exited, dropping
+	// whatever the copy above hadn't read yet (os/exec: "it is
+	// incorrect to call Wait before all reads from the pipe have
+	// completed"). Its last words are the session's closing handshake
+	// -- the receiver's ZFIN answer, the sender's "OO" -- so under load
+	// they got lost now and then, and the other side waited out its
+	// own timeouts before giving up (seen as a sender hanging well
+	// over ten seconds after a complete transfer). The copy ends by
+	// itself once sexyz exits and its stdout reaches EOF.
+	//
+	// Both goroutines must also be done touching conn before this
 	// returns: the caller resumes reading conn for ordinary keystrokes
 	// right afterward, and a still-running reader here would race it
 	// for whatever the caller types first (see copyUntilClosed for the
-	// mechanics). stdout's side finishes on its own the moment sexyz's
-	// stdout pipe closes, which Wait() having already returned
-	// guarantees already happened or is about to.
+	// mechanics).
 	<-stdoutDone
+	waitErr := cmd.Wait()
 
 	// conn's copy only finishes once it next reads *something* -- if
 	// conn supports interrupting a pending Read on demand (telnet.
