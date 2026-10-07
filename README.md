@@ -1,8 +1,8 @@
 # NullModem Kit
 
 Der gemeinsame Unterbau der NullModem-Familie: [NullModem
-BBS](https://git.maik.ch/nullmodem/bbs) und [NullModem
-Reader](https://git.maik.ch/nullmodem/reader).
+BBS](https://github.com/midrei/nullmodem-bbs) und [NullModem
+Reader](https://github.com/midrei/nullmodem-reader).
 
 | Paket | Inhalt |
 |---|---|

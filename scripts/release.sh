@@ -10,11 +10,11 @@
 # build with GOWORK=off against the version go.mod pins.
 set -euo pipefail
 
-MODULE=git.maik.ch/nullmodem/kit
+MODULE=github.com/midrei/nullmodem-kit
 DEPENDENTS=(bbs reader)
-# Fetch the new tag straight from git.maik.ch; the public proxy may not
-# have seen it yet.
-export GOPRIVATE=git.maik.ch
+# Fetch the new tag straight from GitHub; the public proxy may not have
+# seen it yet.
+export GOPRIVATE=$MODULE
 
 die() { echo "release: $*" >&2; exit 1; }
 
