@@ -1,60 +1,67 @@
 # NullModem Kit
 
-Der gemeinsame Unterbau der NullModem-Familie: [NullModem
-BBS](https://github.com/midrei/nullmodem-bbs) und [NullModem
+**English** · [Deutsch](README.de.md)
+
+The shared foundation of the NullModem family: [NullModem
+BBS](https://github.com/midrei/nullmodem-bbs) and [NullModem
 Reader](https://github.com/midrei/nullmodem-reader).
 
-| Paket | Inhalt |
+| Package | Contents |
 |---|---|
-| `ansi` | Die Grid-Matrix: CP437 ↔ Unicode, ANSI/SGR-Parser, Layout-Engine mit `{FILL}`/`{PLACEHOLDER}`, HTML-Konverter |
-| `qwk` | QWK/QWKE-Formatschicht: `CONTROL.DAT`, `MESSAGES.DAT`, `.NDX`, `TOREADER.EXT`, Pakete lesen und schreiben, `.REP` in beide Richtungen |
-| `zmodem` | ZMODEM senden und empfangen |
+| `ansi` | The grid: CP437 ↔ Unicode, ANSI/SGR parser, layout engine with `{FILL}`/`{PLACEHOLDER}`, HTML converter |
+| `qwk` | QWK/QWKE format layer: `CONTROL.DAT`, `MESSAGES.DAT`, `.NDX`, `TOREADER.EXT`, reading and writing packets, `.REP` both ways |
+| `zmodem` | ZMODEM send and receive |
 
-## Warum ein eigenes Repo
+```sh
+go get github.com/midrei/nullmodem-kit@latest
+```
 
-Server und Reader müssen sich über dasselbe Dateiformat und dieselbe
-Bildschirmdarstellung einig sein. Zwei Kopien desselben Codes driften ab dem
-ersten Bugfix auseinander — und beim QWK-Format merkt man das erst, wenn
-jemandem Post verlorengeht.
+## Why a repository of its own
 
-Go erlaubt keinen modulübergreifenden Import aus `internal/`, deshalb liegen
-diese Pakete hier statt in einem der beiden Projekte.
+Server and reader have to agree on the same file format and the same
+screen rendering. Two copies of the same code drift apart from the first
+bug fix on -- and with QWK you only notice when someone's mail goes
+missing.
 
-## Die Grid als einzige Darstellung
+Go doesn't allow importing another module's `internal/` packages, so
+these live here rather than in either project.
 
-`ansi.Grid` ist ein Zellenraster: jede Zelle hält das rohe CP437-Byte plus
-Vorder- und Hintergrundfarbe. Wer etwas anzeigen will, parst es in eine Grid
-und schreibt einen Blitter dafür — für Telnet (`Grid.Encode`), für HTML
-(`ToHTML`), für ein UTF-8-Terminal, für ein Fenster mit Bitmapfont. Das
-Zeichenbyte bleibt erhalten, weil eine Rückabbildung Unicode → CP437
-verlustbehaftet wäre.
+## The grid as the one representation
 
-## Stand
+`ansi.Grid` is a grid of cells: each holds the raw CP437 byte plus its
+foreground and background colour. To show something, parse it into a
+grid and write a blitter for it -- for Telnet (`Grid.Encode`), HTML
+(`ToHTML`), a UTF-8 terminal, a window with a bitmap font. The character
+byte is kept because mapping Unicode back to CP437 would lose
+information.
 
-Alle Pakete sind stdlib-only. `go test ./...`
+## Status
+
+All packages use the standard library only. `go test ./...`
 
 ## Releases
 
-BBS und Reader binden das Kit über eine feste Version in ihrer `go.mod` ein.
-Ihre Builds (Docker-Image, Reader-Releases) laufen mit `GOWORK=off` und
-nehmen genau diese Version. Eine Kit-Änderung kommt dort also erst an,
-wenn sie getaggt ist und beide darauf umgestellt sind:
+The BBS and the reader pin the kit to a fixed version in their `go.mod`.
+Their builds (the Docker image, reader releases) run with `GOWORK=off`
+and take exactly that version, so a kit change only reaches them once
+it is tagged and both have moved to it:
 
 ```
-scripts/release.sh v0.2.0
+scripts/release.sh v0.3.0
 ```
 
-Das Skript prüft, dass `main` sauber und mit `origin` gleichauf ist, lässt
-`go vet` und die Tests laufen, setzt und pusht den Tag und hebt dann die
-danebenliegenden Checkouts `../bbs` und `../reader` per `go get` auf die neue
-Version — jeweils mit Build und Tests. Committen und pushen musst du dort
-selbst, nachdem du den Diff angesehen hast.
+The script checks that `main` is clean and in sync with `origin`, runs
+`go vet` and the tests, sets and pushes the tag, and then moves the
+checkouts next to it, `../bbs` and `../reader`, onto the new version with
+`go get` -- each built and tested. Committing and pushing there is up to
+you, after looking at the diff.
 
-Zum lokalen Entwickeln über alle drei Repos hinweg dient das `go.work` im
-Elternverzeichnis; es gilt nur auf deiner Maschine, nie in einem Release.
+For local development across all three repositories, use a `go.work` in
+the parent directory; it applies to your machine only, never to a
+release.
 
-## Lizenz
+## License
 
-MIT — siehe [LICENSE](LICENSE). Das Kit soll auch anderen BBS- und
-Reader-Projekten dienen: QWK/QWKE, CP437 und ANSI sind Handwerk, das keiner
-zweimal schreiben muss.
+MIT -- see [LICENSE](LICENSE). The kit is meant to serve other BBS and
+reader projects too: QWK/QWKE, CP437 and ANSI are craft nobody needs to
+write twice.
