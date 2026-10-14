@@ -1,3 +1,3 @@
 module github.com/midrei/nullmodem-kit
 
-go 1.26.0
+go 1.27.2
