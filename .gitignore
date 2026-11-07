@@ -2,3 +2,5 @@
 *.test
 *.out
 .env
+# Local working notes, not published
+CLAUDE.md
